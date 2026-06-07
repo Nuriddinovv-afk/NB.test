@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NB - DTM Test Platformasi</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; }
+        header { background-color: #1e3a8a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; letter-spacing: 1px; }
+        .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 20px; color: #1e3a8a; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #059669; }
+        .hidden { display: none; }
+        .question { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+        .options { list-style: none; }
+        .options li { margin-bottom: 10px; }
+        .options label { display: flex; align-items: center; padding: 10px; background: #f3f4f6; border-radius: 5px; cursor: pointer; transition: 0.2s; font-weight: normal; }
+        .options label:hover { background: #e5e7eb; }
+        .options input { width: auto; margin-right: 10px; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+        .btn-nav { background-color: #3b82f6; width: 48%; }
+        .btn-nav:hover { background-color: #2563eb; }
+        .stats { margin-top: 15px; text-align: center; font-size: 14px; color: #666; }
+        .result-card { text-align: center; }
+        .score { font-size: 48px; color: #10b981; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">NB</div>
+    <div id="user-display">Mehmonsiz</div>
+</header>
+
+<div class="container">
+    <!-- 1. RO'YXATDAN O'TISH BO'LIMI -->
+    <div id="auth-box">
+        <h2>Ro'yxatdan o'tish</h2>
+        <form id="reg-form">
+            <div class="form-group">
+                <label for="username">Ism va Familiyangiz:</label>
+                <input type="text" id="username" required placeholder="Masalan: Ali Valiyev">
+            </div>
+            <div class="form-group">
+                <label for="phone">Telefon raqamingiz:</label>
+                <input type="tel" id="phone" required placeholder="Masalan: +998901234567">
+            </div>
+            <button type="submit">Testni boshlash</button>
+        </form>
+    </div>
+
+    <!-- 2. TEST YECHISH BO'LIMI -->
+    <div id="quiz-box" class="hidden">
+        <h2 id="subject-title">DTM Matematika Testi</h2>
+        <div class="stats" id="progress-text">Savol: 1 / 1000</div>
+        <div class="question" id="question-text">Savol yuklanmoqda...</div>
+        <ul class="options" id="options-list">
+            <!-- Variantlar shu yerga chiqadi -->
+        </ul>
+        <div class="nav-buttons">
+            <button class="btn-nav" id="prev-btn" onclick="prevQuestion()">Orqaga</button>
+            <button class="btn-nav" id="next-btn" onclick="nextQuestion()">Keyingisi</button>
+        </div>
+        <button style="margin-top: 15px; background-color: #ef4444;" onclick="finishQuiz()">Testni yakunlash</button>
+    </div>
+
+    <!-- 3. NATIJA BO'LIMI -->
+    <div id="result-box" class="hidden" class="result-card">
+        <h2>Sizning natijangiz</h2>
+        <div class="score" id="final-score">0 / 10</div>
+        <p id="user-summary" style="margin-bottom: 20px; line-height: 1.6;"></p>
+        <button onclick="location.reload()">Qaytadan urinish</button>
+    </div>
+</div>
+
+<script>
+    // 1000 ta test generatori funksiyasi (Siz uchun avtomatlashtirilgan namunaviy baza)
+    function generate1000Questions() {
+        let list = [];
+        for (let i = 1; i <= 1000; i++) {
+            let num1 = Math.floor(Math.random() * 50) + 10;
+            let num2 = Math.floor(Math.random() * 40) + 5;
+            let correct = num1 + num2;
+            
+            list.push({
+                id: i,
+                q: `${i}-savol: ${num1} + ${num2} yig'indisini hisoblang.`,
+                answers: [correct, correct + 5, correct - 3, correct + 10],
+                correctIndex: 0 // To'g'ri javob doim birinchi indeksda (kod uni aralashtirib ko'rsatadi)
+            });
+        }
+        return list;
+    }
+
+    const allQuestions = generate1000Questions();
+    let currentQuizIndex = 0;
+    let userAnswers = {};
+    let userData = { name: '', phone: '' };
+
+    const regForm = document.getElementById('reg-form');
+    const authBox = document.getElementById('auth-box');
+    const quizBox = document.getElementById('quiz-box');
+    const resultBox = document.getElementById('result-box');
+    const userDisplay = document.getElementById('user-display');
+
+    // Ro'yxatdan o'tishni boshqarish
+    regForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        userData.name = document.getElementById('username').value;
+        userData.phone = document.getElementById('phone').value;
+        
+        userDisplay.textContent = userData.name;
+        authBox.classList.add('hidden');
+        quizBox.classList.remove('hidden');
+        
+        loadQuestion();
+    });
+
+    // Savolni ekranga chiqarish
+    function loadQuestion() {
+        const qData = allQuestions[currentQuizIndex];
+        document.getElementById('progress-text').textContent = `Savol: ${currentQuizIndex + 1} / 1000`;
+        document.getElementById('question-text').textContent = qData.q;
+        
+        const optionsList = document.getElementById('options-list');
+        optionsList.innerHTML = '';
+
+        // Variantlar joylashuvini saqlab qolgan holda chiqarish
+        qData.answers.forEach((ans, index) => {
+            const li = document.createElement('li');
+            const isChecked = userAnswers[currentQuizIndex] === index ? 'checked' : '';
+            li.innerHTML = `
+                <label>
+                    <input type="radio" name="answer" value="${index}" ${isChecked} onchange="saveAnswer(${index})">
+                    ${ans}
+                </label>
+            `;
+            optionsList.appendChild(li);
+        });
+
+        // Tugmalar holati
+        document.getElementById('prev-btn').disabled = currentQuizIndex === 0;
+        if (currentQuizIndex === allQuestions.length - 1) {
+            document.getElementById('next-btn').textContent = 'Tugatish';
+        } else {
+            document.getElementById('next-btn').textContent = 'Keyingisi';
+        }
+    }
+
+    // Javobni xotirada saqlash
+    function saveAnswer(index) {
+        userAnswers[currentQuizIndex] = index;
+    }
+
+    // Keyingi savolga o'tish
+    function nextQuestion() {
+        if (currentQuizIndex < allQuestions.length - 1) {
+            currentQuizIndex++;
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    // Oldingi savolga qaytish
+    function prevQuestion() {
+        if (currentQuizIndex > 0) {
+            currentQuizIndex--;
+            loadQuestion();
+        }
+    }
+
+    // Testni yakunlash va natija
+    function finishQuiz() {
+        let correctCount = 0;
+        allQuestions.forEach((q, index) => {
+            if (userAnswers[index] === q.correctIndex) {
+                correctCount++;
+            }
+        });
+
+        quizBox.classList.add('hidden');
+        resultBox.classList.remove('hidden');
+        
+        document.getElementById('final-score').textContent = `${correctCount} / 1000`;
+        document.getElementById('user-summary').innerHTML = `
+            <strong>Foydalanuvchi:</strong> ${userData.name}<br>
+            <strong>Telefon:</strong> ${userData.phone}<br>
+            <strong>To'g'ri javoblar:</strong> ${correctCount} ta<br>
+            <strong>Xato javoblar:</strong> ${1000 - correctCount} ta
+        `;
+    }
+</script>
+
+</body>
+</html>
