@@ -1,0 +1,23 @@
+{
+  "name": "nb-test",
+  "version": "1.0.0",
+  "description": "DTM Test Platform with Vercel Speed Insights",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nuriddinovv-afk/NB.test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nuriddinovv-afk/NB.test/issues"
+  },
+  "homepage": "https://github.com/Nuriddinovv-afk/NB.test#readme",
+  "dependencies": {
+    "@vercel/speed-insights": "^2.0.0"
+  }
+}
